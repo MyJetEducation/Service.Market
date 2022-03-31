@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MyJetEducation.Service.MarketProduct.Client" Version="1.0.4" />
+    <PackageReference PrivateAssets="All" Include="System.ServiceModel.Primitives" Version="4.9.0" />
+    <PackageReference PrivateAssets="All" Include="MyJetEducation.Service.Core.Client" Version="1.0.33" />
+    <PackageReference PrivateAssets="All" Include="MyJetWallet.Sdk.Grpc" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Service.Market.Domain.Models\Service.Market.Domain.Models.csproj" />
+  </ItemGroup>
+
+</Project>

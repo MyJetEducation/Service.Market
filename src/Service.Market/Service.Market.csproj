@@ -1,0 +1,52 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <UserSecretsId>29F796E2-F0E3-43BF-95CA-777BA39F2573</UserSecretsId>
+    <LangVersion>8.0</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Autofac" Version="6.3.0" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="7.2.0" />
+    <PackageReference Include="MyJetEducation.Service.MarketProduct.Client" Version="1.0.4" />
+    <PackageReference Include="MyJetEducation.Service.UserTokenAccount.Client" Version="1.0.0" />
+    <PackageReference Include="System.ServiceModel.Primitives" Version="4.9.0" />
+    <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="7.2.0" />
+    <PackageReference Include="Grpc.AspNetCore" Version="2.44.0" />
+    <PackageReference Include="JetBrains.Annotations" Version="2021.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <PackageReference Include="prometheus-net.AspNetCore" Version="6.0.0" />
+    <PackageReference Include="protobuf-net.Grpc.AspNetCore" Version="1.0.152" />
+    <PackageReference Include="MySettingsReader" Version="1.2.2" />
+    <PackageReference Include="SimpleTrading.BaseMetrics" Version="1.0.3" />
+    <PackageReference Include="SimpleTrading.ServiceStatusReporterConnector" Version="1.0.9" />
+    <PackageReference Include="SimpleTrading.Common" Version="1.0.32" />
+    <PackageReference Include="MyJetWallet.Sdk.GrpcMetrics" Version="2.0.4" />
+    <PackageReference Include="MyJetWallet.Sdk.GrpcSchema" Version="1.0.6" />
+    <PackageReference Include="MyJetWallet.Sdk.Service" Version="2.1.7" />
+    <PackageReference Include="MyJetWallet.Sdk.ServiceBus" Version="2.2.2" />
+    <PackageReference Include="MyJetEducation.Service.Core.Client" Version="1.0.33" />
+    <PackageReference Include="MyJetEducation.Service.ServiceBus" Version="1.0.19" />
+    <PackageReference Include="MyJetEducation.Service.Grpc" Version="1.0.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Service.Market.Domain\Service.Market.Domain.csproj" />
+    <ProjectReference Include="..\Service.Market.Grpc\Service.Market.Grpc.csproj" />
+    <ProjectReference Include="..\Service.Market.Postgres\Service.Market.Postgres.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Dockerfile">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Mappers\" />
+  </ItemGroup>
+
+</Project>

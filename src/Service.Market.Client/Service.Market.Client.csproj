@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference PrivateAssets="All" Include="..\Service.Market.Grpc\Service.Market.Grpc.csproj" />
+    <PackageReference PrivateAssets="All" Include="Autofac" Version="6.3.0" />
+    <PackageReference PrivateAssets="All" Include="JetBrains.Annotations" Version="2021.3.0" />
+    <PackageReference PrivateAssets="All" Include="MyJetWallet.Sdk.Grpc" Version="2.0.0" />
+    <PackageReference PrivateAssets="All" Include="MyJetEducation.Service.Grpc" Version="1.0.7" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>
+      $(TargetsForTfmSpecificBuildOutput);PackReferencedProjectOutputs
+    </TargetsForTfmSpecificBuildOutput>
+    <PackageId>MyJetEducation.Service.Market.Client</PackageId>
+    <Authors>MyJetEducation</Authors>
+    <Company>MyJetEducation</Company>
+    <Product>MyJetEducation</Product>
+    <PackageProjectUrl>https://github.com/MyJetEducation/Service.Market</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/MyJetEducation/Service.Market</RepositoryUrl>
+  </PropertyGroup>
+
+  <Target Name="PackReferencedProjectOutputs" DependsOnTargets="BuildOnlySettings;ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+    </ItemGroup>
+  </Target>
+
+</Project>
