@@ -1,6 +1,8 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using MyJetWallet.Sdk.ServiceBus;
 using Service.Grpc;
 using Service.Market.Grpc;
 using Service.Market.Grpc.Models;
@@ -8,6 +10,7 @@ using Service.Market.Mappers;
 using Service.MarketProduct.Domain.Models;
 using Service.MarketProduct.Grpc;
 using Service.MarketProduct.Grpc.Models;
+using Service.ServiceBus.Models;
 using Service.UserTokenAccount.Domain.Models;
 using Service.UserTokenAccount.Grpc;
 using Service.UserTokenAccount.Grpc.Models;
@@ -20,12 +23,17 @@ namespace Service.Market.Services
 		private readonly ILogger<MarketService> _logger;
 		private readonly IGrpcServiceProxy<IUserTokenAccountService> _userTokenAccountService;
 		private readonly IGrpcServiceProxy<IMarketProductService> _marketProductService;
+		private readonly IServiceBusPublisher<ClearEducationProgressServiceBusModel> _clearProgressPublisher;
 
-		public MarketService(ILogger<MarketService> logger, IGrpcServiceProxy<IUserTokenAccountService> userTokenAccountService, IGrpcServiceProxy<IMarketProductService> marketProductService)
+		public MarketService(ILogger<MarketService> logger,
+			IGrpcServiceProxy<IUserTokenAccountService> userTokenAccountService,
+			IGrpcServiceProxy<IMarketProductService> marketProductService,
+			IServiceBusPublisher<ClearEducationProgressServiceBusModel> clearProgressPublisher)
 		{
 			_logger = logger;
 			_userTokenAccountService = userTokenAccountService;
 			_marketProductService = marketProductService;
+			_clearProgressPublisher = clearProgressPublisher;
 		}
 
 		public async ValueTask<TokenAmountGrpcResponse> GetTokenAmountAsync(GetTokenAmountGrpcRequest request)
@@ -56,6 +64,7 @@ namespace Service.Market.Services
 		public async ValueTask<BuyProductGrpcResponse> BuyProductAsync(BuyProductGrpcRequest request)
 		{
 			MarketProductType orderProduct = request.Product;
+			Guid? userId = request.UserId;
 
 			MarketProduct.Grpc.Models.ProductGrpcResponse resonse = await _marketProductService.Service.GetProductAsync(new GetProductGrpcRequest
 			{
@@ -79,7 +88,7 @@ namespace Service.Market.Services
 
 			NewOperationGrpcResponse orderResponse = await _userTokenAccountService.TryCall(service => service.NewOperationAsync(new NewOperationGrpcRequest
 			{
-				UserId = request.UserId,
+				UserId = userId,
 				Value = marketProduct.Price.GetValueOrDefault(),
 				ProductType = orderProduct,
 				Movement = TokenOperationMovement.Outcome,
@@ -92,15 +101,25 @@ namespace Service.Market.Services
 			{
 				return operationResult switch
 				{
-					TokenOperationResult.InsufficientAccount => new BuyProductGrpcResponse { InsufficientAccount = true },
+					TokenOperationResult.InsufficientAccount => new BuyProductGrpcResponse {InsufficientAccount = true},
 					TokenOperationResult.Failed => BuyProductGrpcResponse.Fail,
 					_ => BuyProductGrpcResponse.Fail
-				};
+					};
 			}
 
-			//
+			await ProcessNewProduct(orderProduct, userId);
 
 			return BuyProductGrpcResponse.Ok;
+		}
+
+		private async Task ProcessNewProduct(MarketProductType product, Guid? userId)
+		{
+			if (product == MarketProductType.EducationProgressWipe)
+			{
+				_logger.LogInformation("Publish ClearEducationProgressServiceBusModel for user {user}, product: {product}", userId, product);
+
+				await _clearProgressPublisher.PublishAsync(new ClearEducationProgressServiceBusModel {UserId = userId});
+			}
 		}
 	}
 }

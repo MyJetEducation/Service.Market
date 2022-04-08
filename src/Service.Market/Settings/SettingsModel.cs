@@ -14,10 +14,13 @@ namespace Service.Market.Settings
         [YamlProperty("Market.ElkLogs")]
         public LogElkSettings ElkLogs { get; set; }
 
-        [YamlProperty("MarketApi.MarketProductServiceUrl")]
+        [YamlProperty("Market.MarketProductServiceUrl")]
         public string MarketProductServiceUrl { get; set; }
 
-        [YamlProperty("MarketApi.UserTokenAccountServiceUrl")]
+        [YamlProperty("Market.UserTokenAccountServiceUrl")]
         public string UserTokenAccountServiceUrl { get; set; }
+
+        [YamlProperty("Market.ServiceBusWriter")]
+        public string ServiceBusWriter { get; set; }
     }
 }
