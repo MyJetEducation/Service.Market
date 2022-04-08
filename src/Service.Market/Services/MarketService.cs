@@ -73,7 +73,7 @@ namespace Service.Market.Services
 		public async ValueTask<BuyProductGrpcResponse> BuyProductAsync(BuyProductGrpcRequest request)
 		{
 			MarketProductType orderProduct = request.Product;
-			Guid? userId = request.UserId;
+			string userId = request.UserId;
 
 			MarketProduct.Grpc.Models.ProductGrpcResponse resonse = await _marketProductService.Service.GetProductAsync(new GetProductGrpcRequest
 			{
@@ -121,7 +121,7 @@ namespace Service.Market.Services
 			return await ProcessNewProduct(orderProduct, userId);
 		}
 
-		private async ValueTask<BuyProductGrpcResponse> ProcessNewProduct(MarketProductType product, Guid? userId)
+		private async ValueTask<BuyProductGrpcResponse> ProcessNewProduct(MarketProductType product, string userId)
 		{
 			if (product == MarketProductType.EducationProgressWipe)
 			{

@@ -31,13 +31,12 @@
     <PackageReference Include="MyJetEducation.Service.Core.Client" Version="1.0.35" />
     <PackageReference Include="MyJetEducation.Service.ServiceBus" Version="1.0.22" />
     <PackageReference Include="MyJetEducation.Service.Grpc" Version="1.0.7" />
-    <PackageReference Include="MyJetEducation.Service.EducationRetry.Client" Version="1.0.7" />
+    <PackageReference Include="MyJetEducation.Service.EducationRetry.Client" Version="1.0.8" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Service.Market.Domain\Service.Market.Domain.csproj" />
     <ProjectReference Include="..\Service.Market.Grpc\Service.Market.Grpc.csproj" />
-    <ProjectReference Include="..\Service.Market.Postgres\Service.Market.Postgres.csproj" />
   </ItemGroup>
 
   <ItemGroup>
