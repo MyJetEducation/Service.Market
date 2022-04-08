@@ -22,5 +22,8 @@ namespace Service.Market.Settings
 
         [YamlProperty("Market.ServiceBusWriter")]
         public string ServiceBusWriter { get; set; }
+
+        [YamlProperty("Market.EducationRetryServiceUrl")]
+        public string EducationRetryServiceUrl { get; set; }
     }
 }

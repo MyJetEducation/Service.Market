@@ -3,6 +3,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using MyJetWallet.Sdk.ServiceBus;
+using Service.Core.Client.Models;
+using Service.EducationRetry.Grpc;
+using Service.EducationRetry.Grpc.Models;
 using Service.Grpc;
 using Service.Market.Grpc;
 using Service.Market.Grpc.Models;
@@ -24,16 +27,22 @@ namespace Service.Market.Services
 		private readonly IGrpcServiceProxy<IUserTokenAccountService> _userTokenAccountService;
 		private readonly IGrpcServiceProxy<IMarketProductService> _marketProductService;
 		private readonly IServiceBusPublisher<ClearEducationProgressServiceBusModel> _clearProgressPublisher;
+		private readonly IServiceBusPublisher<NewMascotProductServiceBusModel> _newMascotPublisher;
+		private readonly IGrpcServiceProxy<IEducationRetryService> _educationRetryService;
 
 		public MarketService(ILogger<MarketService> logger,
 			IGrpcServiceProxy<IUserTokenAccountService> userTokenAccountService,
 			IGrpcServiceProxy<IMarketProductService> marketProductService,
-			IServiceBusPublisher<ClearEducationProgressServiceBusModel> clearProgressPublisher)
+			IServiceBusPublisher<ClearEducationProgressServiceBusModel> clearProgressPublisher,
+			IGrpcServiceProxy<IEducationRetryService> educationRetryService,
+			IServiceBusPublisher<NewMascotProductServiceBusModel> newMascotPublisher)
 		{
 			_logger = logger;
 			_userTokenAccountService = userTokenAccountService;
 			_marketProductService = marketProductService;
 			_clearProgressPublisher = clearProgressPublisher;
+			_educationRetryService = educationRetryService;
+			_newMascotPublisher = newMascotPublisher;
 		}
 
 		public async ValueTask<TokenAmountGrpcResponse> GetTokenAmountAsync(GetTokenAmountGrpcRequest request)
@@ -86,19 +95,21 @@ namespace Service.Market.Services
 				return BuyProductGrpcResponse.Fail;
 			}
 
-			NewOperationGrpcResponse orderResponse = await _userTokenAccountService.TryCall(service => service.NewOperationAsync(new NewOperationGrpcRequest
+			var operation = new NewOperationGrpcRequest
 			{
 				UserId = userId,
 				Value = marketProduct.Price.GetValueOrDefault(),
 				ProductType = orderProduct,
 				Movement = TokenOperationMovement.Outcome,
 				Source = TokenOperationSource.ProductPurchase
-			}));
+			};
 
+			NewOperationGrpcResponse orderResponse = await _userTokenAccountService.TryCall(service => service.NewOperationAsync(operation));
 			TokenOperationResult operationResult = orderResponse.Result;
-
 			if (operationResult != TokenOperationResult.Ok)
 			{
+				_logger.LogError("New operation {@operation} for user {user} failed.", operation, userId);
+
 				return operationResult switch
 				{
 					TokenOperationResult.InsufficientAccount => new BuyProductGrpcResponse {InsufficientAccount = true},
@@ -107,12 +118,10 @@ namespace Service.Market.Services
 					};
 			}
 
-			await ProcessNewProduct(orderProduct, userId);
-
-			return BuyProductGrpcResponse.Ok;
+			return await ProcessNewProduct(orderProduct, userId);
 		}
 
-		private async Task ProcessNewProduct(MarketProductType product, Guid? userId)
+		private async ValueTask<BuyProductGrpcResponse> ProcessNewProduct(MarketProductType product, Guid? userId)
 		{
 			if (product == MarketProductType.EducationProgressWipe)
 			{
@@ -120,6 +129,40 @@ namespace Service.Market.Services
 
 				await _clearProgressPublisher.PublishAsync(new ClearEducationProgressServiceBusModel {UserId = userId});
 			}
+
+			if (ProductTypeGroup.RetryPackProductTypes.Contains(product))
+			{
+				int retryValue = GetRetryValue(product);
+
+				_logger.LogInformation("Calling increase retry count ({count}) for user {user}, product: {product}.", retryValue, userId, product);
+
+				CommonGrpcResponse response = await _educationRetryService.TryCall(service => service.IncreaseRetryCountAsync(new IncreaseRetryCountGrpcRequest
+				{
+					UserId = userId,
+					Value = retryValue
+				}));
+
+				if (response.IsSuccess != true)
+					return BuyProductGrpcResponse.Fail;
+			}
+
+			if (ProductTypeGroup.MascotProductTypes.Contains(product))
+			{
+				_logger.LogInformation("Publish NewMascotProductServiceBusModel for user {user}, product: {product}", userId, product);
+
+				await _newMascotPublisher.PublishAsync(new NewMascotProductServiceBusModel {UserId = userId, Product = product});
+			}
+
+			return BuyProductGrpcResponse.Ok;
 		}
+
+		private static int GetRetryValue(MarketProductType product) =>
+			product switch {
+				MarketProductType.RetryPack1 => 1,
+				MarketProductType.RetryPack10 => 10,
+				MarketProductType.RetryPack25 => 25,
+				MarketProductType.RetryPack100 => 100,
+				_ => throw new Exception($"Can't get retry value count from product {product}")
+				};
 	}
 }

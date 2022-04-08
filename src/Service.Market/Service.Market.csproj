@@ -31,6 +31,7 @@
     <PackageReference Include="MyJetEducation.Service.Core.Client" Version="1.0.35" />
     <PackageReference Include="MyJetEducation.Service.ServiceBus" Version="1.0.22" />
     <PackageReference Include="MyJetEducation.Service.Grpc" Version="1.0.7" />
+    <PackageReference Include="MyJetEducation.Service.EducationRetry.Client" Version="1.0.7" />
   </ItemGroup>
 
   <ItemGroup>
