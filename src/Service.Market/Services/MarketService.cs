@@ -24,18 +24,22 @@ namespace Service.Market.Services
 	public class MarketService : IMarketService
 	{
 		private readonly ILogger<MarketService> _logger;
+
 		private readonly IGrpcServiceProxy<IUserTokenAccountService> _userTokenAccountService;
 		private readonly IGrpcServiceProxy<IMarketProductService> _marketProductService;
-		private readonly IServiceBusPublisher<ClearEducationProgressServiceBusModel> _clearProgressPublisher;
-		private readonly IServiceBusPublisher<NewMascotProductServiceBusModel> _newMascotPublisher;
 		private readonly IGrpcServiceProxy<IEducationRetryService> _educationRetryService;
+
+		private readonly IServiceBusPublisher<ClearEducationProgressServiceBusModel> _clearProgressPublisher;
+		private readonly IServiceBusPublisher<ClearEducationUiProgressServiceBusModel> _clearUiProgressPublisher;
+		private readonly IServiceBusPublisher<NewMascotProductServiceBusModel> _newMascotPublisher;
 
 		public MarketService(ILogger<MarketService> logger,
 			IGrpcServiceProxy<IUserTokenAccountService> userTokenAccountService,
 			IGrpcServiceProxy<IMarketProductService> marketProductService,
 			IServiceBusPublisher<ClearEducationProgressServiceBusModel> clearProgressPublisher,
 			IGrpcServiceProxy<IEducationRetryService> educationRetryService,
-			IServiceBusPublisher<NewMascotProductServiceBusModel> newMascotPublisher)
+			IServiceBusPublisher<NewMascotProductServiceBusModel> newMascotPublisher, 
+			IServiceBusPublisher<ClearEducationUiProgressServiceBusModel> clearUiProgressPublisher)
 		{
 			_logger = logger;
 			_userTokenAccountService = userTokenAccountService;
@@ -43,6 +47,7 @@ namespace Service.Market.Services
 			_clearProgressPublisher = clearProgressPublisher;
 			_educationRetryService = educationRetryService;
 			_newMascotPublisher = newMascotPublisher;
+			_clearUiProgressPublisher = clearUiProgressPublisher;
 		}
 
 		public async ValueTask<TokenAmountGrpcResponse> GetTokenAmountAsync(GetTokenAmountGrpcRequest request)
@@ -127,7 +132,23 @@ namespace Service.Market.Services
 			{
 				_logger.LogInformation("Publish ClearEducationProgressServiceBusModel for user {user}, product: {product}", userId, product);
 
-				await _clearProgressPublisher.PublishAsync(new ClearEducationProgressServiceBusModel {UserId = userId});
+				await _clearProgressPublisher.PublishAsync(new ClearEducationProgressServiceBusModel
+				{
+					UserId = userId,
+					ClearProgress = true,
+					ClearAchievements = true,
+					ClearHabits = true,
+					ClearKnowledge = true,
+					ClearRetry = true,
+					ClearSkills = true,
+					ClearStatuses = true,
+					ClearUserTime = true
+				});
+
+				await _clearUiProgressPublisher.PublishAsync(new ClearEducationUiProgressServiceBusModel
+				{
+					UserId = userId
+				});
 			}
 
 			if (ProductTypeGroup.RetryPackProductTypes.Contains(product))

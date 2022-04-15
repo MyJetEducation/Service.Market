@@ -20,10 +20,13 @@ namespace Service.Market.Modules
 			var tcpServiceBus = new MyServiceBusTcpClient(() => Program.Settings.ServiceBusWriter, "MyJetEducation Service.Market");
 
 			builder
-				.Register(context => new MyServiceBusPublisher<ClearEducationProgressServiceBusModel>(tcpServiceBus, ClearEducationProgressServiceBusModel.TopicName, false))
+				.Register(_ => new MyServiceBusPublisher<ClearEducationProgressServiceBusModel>(tcpServiceBus, ClearEducationProgressServiceBusModel.TopicName, false))
 				.As<IServiceBusPublisher<ClearEducationProgressServiceBusModel>>()
 				.SingleInstance();
-			
+			builder
+				.Register(_ => new MyServiceBusPublisher<ClearEducationUiProgressServiceBusModel>(tcpServiceBus, ClearEducationUiProgressServiceBusModel.TopicName, false))
+				.As<IServiceBusPublisher<ClearEducationUiProgressServiceBusModel>>()
+				.SingleInstance();
 			builder
 				.Register(context => new MyServiceBusPublisher<NewMascotProductServiceBusModel>(tcpServiceBus, NewMascotProductServiceBusModel.TopicName, false))
 				.As<IServiceBusPublisher<NewMascotProductServiceBusModel>>()
