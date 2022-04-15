@@ -9,7 +9,8 @@ namespace Service.Market.Mappers
 		{
 			Product = model.ProductType,
 			Category = model.Category,
-			Price = model.Price
+			Price = model.Price,
+			Priority = model.Priority
 		};
 	}
 }

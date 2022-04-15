@@ -14,5 +14,8 @@ namespace Service.Market.Grpc.Models
 
 		[DataMember(Order = 3)]
 		public decimal? Price { get; set; }
+
+		[DataMember(Order = 4)]
+		public int Priority { get; set; }
 	}
 }
