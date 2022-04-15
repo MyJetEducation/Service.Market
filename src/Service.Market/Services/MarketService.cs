@@ -14,6 +14,8 @@ using Service.MarketProduct.Domain.Models;
 using Service.MarketProduct.Grpc;
 using Service.MarketProduct.Grpc.Models;
 using Service.ServiceBus.Models;
+using Service.UserMascotRepository.Grpc;
+using Service.UserMascotRepository.Grpc.Models;
 using Service.UserTokenAccount.Domain.Models;
 using Service.UserTokenAccount.Grpc;
 using Service.UserTokenAccount.Grpc.Models;
@@ -28,6 +30,7 @@ namespace Service.Market.Services
 		private readonly IGrpcServiceProxy<IUserTokenAccountService> _userTokenAccountService;
 		private readonly IGrpcServiceProxy<IMarketProductService> _marketProductService;
 		private readonly IGrpcServiceProxy<IEducationRetryService> _educationRetryService;
+		private readonly IGrpcServiceProxy<IUserMascotRepositoryService> _userMascotRepository;
 
 		private readonly IServiceBusPublisher<ClearEducationProgressServiceBusModel> _clearProgressPublisher;
 		private readonly IServiceBusPublisher<ClearEducationUiProgressServiceBusModel> _clearUiProgressPublisher;
@@ -38,8 +41,9 @@ namespace Service.Market.Services
 			IGrpcServiceProxy<IMarketProductService> marketProductService,
 			IServiceBusPublisher<ClearEducationProgressServiceBusModel> clearProgressPublisher,
 			IGrpcServiceProxy<IEducationRetryService> educationRetryService,
-			IServiceBusPublisher<NewMascotProductServiceBusModel> newMascotPublisher, 
-			IServiceBusPublisher<ClearEducationUiProgressServiceBusModel> clearUiProgressPublisher)
+			IServiceBusPublisher<NewMascotProductServiceBusModel> newMascotPublisher,
+			IServiceBusPublisher<ClearEducationUiProgressServiceBusModel> clearUiProgressPublisher,
+			IGrpcServiceProxy<IUserMascotRepositoryService> userMascotRepository)
 		{
 			_logger = logger;
 			_userTokenAccountService = userTokenAccountService;
@@ -48,30 +52,27 @@ namespace Service.Market.Services
 			_educationRetryService = educationRetryService;
 			_newMascotPublisher = newMascotPublisher;
 			_clearUiProgressPublisher = clearUiProgressPublisher;
-		}
-
-		public async ValueTask<TokenAmountGrpcResponse> GetTokenAmountAsync(GetTokenAmountGrpcRequest request)
-		{
-			AccountGrpcResponse response = await _userTokenAccountService.Service.GetAccountAsync(new GetAccountGrpcRequest
-			{
-				UserId = request.UserId
-			});
-
-			return new TokenAmountGrpcResponse
-			{
-				Value = (response?.Value).GetValueOrDefault()
-			};
+			_userMascotRepository = userMascotRepository;
 		}
 
 		public async ValueTask<ProductGrpcResponse> GetProductsAsync(GetProductsGrpcRequest request)
 		{
+			string userId = request.UserId;
+
 			ProductListGrpcResponse response = await _marketProductService.Service.GetProductListAsync(new GetProductListGrpcRequest());
+
+			MascotProductsGrpcResponse userMascotProductsResponse = await _userMascotRepository.Service.GetMascotProducts(new GetMascotProductsGrpcRequest {UserId = userId});
+			if (userMascotProductsResponse == null)
+				_logger.LogError("Can't get user {user} mascot products for request {@request}", userId, request);
+
+			MarketProductType[] userMascotProducts = userMascotProductsResponse?.Products ?? Array.Empty<MarketProductType>();
 
 			return new ProductGrpcResponse
 			{
 				Products = response?.Products
 					.OrderByDescending(model => model.Priority)
-					.Select(model => model.ToGrpcModel()).ToArray()
+					.Select(model => model.ToGrpcModel(userMascotProducts))
+					.ToArray()
 			};
 		}
 
@@ -97,7 +98,22 @@ namespace Service.Market.Services
 			{
 				_logger.LogError("Disabled product {orderProduct} ordered for request {@request}", orderProduct, request);
 
+				return new BuyProductGrpcResponse {Successful = false, ProductNotAvailable = true};
+			}
+
+			MascotProductsGrpcResponse userMascotProductsResponse = await _userMascotRepository.Service.GetMascotProducts(new GetMascotProductsGrpcRequest {UserId = userId});
+			if (userMascotProductsResponse == null)
+			{
+				_logger.LogError("Can't get user {user} mascot products for request {@request}", userId, request);
+
 				return BuyProductGrpcResponse.Fail;
+			}
+
+			if (ProductTypeGroup.MascotProductTypes.Contains(orderProduct) && userMascotProductsResponse.Products.Contains(orderProduct))
+			{
+				_logger.LogError("User {user} already has product {product}, can't buy as duplicate, request {@request}", userId, orderProduct, request);
+
+				return new BuyProductGrpcResponse {Successful = false, ProductAlreadyPurchased = true};
 			}
 
 			var operation = new NewOperationGrpcRequest

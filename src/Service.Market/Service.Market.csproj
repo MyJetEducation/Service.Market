@@ -10,6 +10,7 @@
     <PackageReference Include="Autofac" Version="6.3.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="7.2.0" />
     <PackageReference Include="MyJetEducation.Service.MarketProduct.Client" Version="1.0.5" />
+    <PackageReference Include="MyJetEducation.Service.UserMascotRepository.Client" Version="1.0.0" />
     <PackageReference Include="MyJetEducation.Service.UserTokenAccount.Client" Version="1.0.1" />
     <PackageReference Include="System.ServiceModel.Primitives" Version="4.9.0" />
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="7.2.0" />

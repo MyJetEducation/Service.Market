@@ -17,5 +17,8 @@ namespace Service.Market.Grpc.Models
 
 		[DataMember(Order = 4)]
 		public int Priority { get; set; }
+
+		[DataMember(Order = 5)]
+		public bool Purchased { get; set; }
 	}
 }

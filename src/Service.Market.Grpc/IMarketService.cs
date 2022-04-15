@@ -8,9 +8,6 @@ namespace Service.Market.Grpc
 	public interface IMarketService
 	{
 		[OperationContract]
-		ValueTask<TokenAmountGrpcResponse> GetTokenAmountAsync(GetTokenAmountGrpcRequest request);
-
-		[OperationContract]
 		ValueTask<ProductGrpcResponse> GetProductsAsync(GetProductsGrpcRequest request);
 
 		[OperationContract]

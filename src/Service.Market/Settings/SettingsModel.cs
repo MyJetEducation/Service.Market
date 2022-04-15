@@ -25,5 +25,8 @@ namespace Service.Market.Settings
 
         [YamlProperty("Market.EducationRetryServiceUrl")]
         public string EducationRetryServiceUrl { get; set; }
+
+        [YamlProperty("Market.UserMascotRepositoryServiceUrl")]
+        public string UserMascotRepositoryServiceUrl { get; set; }
     }
 }
