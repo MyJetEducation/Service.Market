@@ -139,14 +139,16 @@ namespace Service.Market.Services
 					};
 			}
 
-			return await ProcessNewProduct(orderProduct, userId);
+			return await ProcessNewProduct(marketProduct, userId, orderResponse.Value.GetValueOrDefault());
 		}
 
-		private async ValueTask<BuyProductGrpcResponse> ProcessNewProduct(MarketProductType product, string userId)
+		private async ValueTask<BuyProductGrpcResponse> ProcessNewProduct(MarketProductGrpcModel product, string userId, decimal account)
 		{
-			if (product == MarketProductType.EducationProgressWipe)
+			MarketProductType productType = product.ProductType;
+
+			if (productType == MarketProductType.EducationProgressWipe)
 			{
-				_logger.LogInformation("Publish ClearEducationProgressServiceBusModel for user {user}, product: {product}", userId, product);
+				_logger.LogInformation("Publish ClearEducationProgressServiceBusModel for user {user}, product: {product}", userId, productType);
 
 				await _clearProgressPublisher.PublishAsync(new ClearEducationProgressServiceBusModel
 				{
@@ -167,11 +169,11 @@ namespace Service.Market.Services
 				});
 			}
 
-			if (ProductTypeGroup.RetryPackProductTypes.Contains(product))
+			if (ProductTypeGroup.RetryPackProductTypes.Contains(productType))
 			{
-				int retryValue = GetRetryValue(product);
+				int retryValue = GetRetryValue(productType);
 
-				_logger.LogInformation("Calling increase retry count ({count}) for user {user}, product: {product}.", retryValue, userId, product);
+				_logger.LogInformation("Calling increase retry count ({count}) for user {user}, product: {product}.", retryValue, userId, productType);
 
 				CommonGrpcResponse response = await _educationRetryService.TryCall(service => service.IncreaseRetryCountAsync(new IncreaseRetryCountGrpcRequest
 				{
@@ -183,12 +185,21 @@ namespace Service.Market.Services
 					return BuyProductGrpcResponse.Fail;
 			}
 
-			if (ProductTypeGroup.MascotProductTypes.Contains(product))
+			if (ProductTypeGroup.MascotProductTypes.Contains(productType))
 			{
 			}
 
-			_logger.LogInformation("Publish MarketProductPurchasedServiceBusModel for user {user}, product: {product}", userId, product);
-			await _newProductPublisher.PublishAsync(new MarketProductPurchasedServiceBusModel { UserId = userId, Product = product });
+			var busModel = new MarketProductPurchasedServiceBusModel
+			{
+				UserId = userId, 
+				Product = productType,
+				ProductPrice = product.Price.GetValueOrDefault(),
+				AccountValue = account
+			};
+
+			_logger.LogInformation("Publish MarketProductPurchasedServiceBusModel: {@busModel}", busModel);
+
+			await _newProductPublisher.PublishAsync(busModel);
 
 			return BuyProductGrpcResponse.Ok;
 		}
