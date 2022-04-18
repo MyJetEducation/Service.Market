@@ -30,8 +30,8 @@ namespace Service.Market.Modules
 				.As<IServiceBusPublisher<ClearEducationUiProgressServiceBusModel>>()
 				.SingleInstance();
 			builder
-				.Register(context => new MyServiceBusPublisher<NewMascotProductServiceBusModel>(tcpServiceBus, NewMascotProductServiceBusModel.TopicName, false))
-				.As<IServiceBusPublisher<NewMascotProductServiceBusModel>>()
+				.Register(context => new MyServiceBusPublisher<MarketProductPurchasedServiceBusModel>(tcpServiceBus, MarketProductPurchasedServiceBusModel.TopicName, false))
+				.As<IServiceBusPublisher<MarketProductPurchasedServiceBusModel>>()
 				.SingleInstance();
 
 			tcpServiceBus.Start();

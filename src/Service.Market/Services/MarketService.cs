@@ -34,14 +34,14 @@ namespace Service.Market.Services
 
 		private readonly IServiceBusPublisher<ClearEducationProgressServiceBusModel> _clearProgressPublisher;
 		private readonly IServiceBusPublisher<ClearEducationUiProgressServiceBusModel> _clearUiProgressPublisher;
-		private readonly IServiceBusPublisher<NewMascotProductServiceBusModel> _newMascotPublisher;
+		private readonly IServiceBusPublisher<MarketProductPurchasedServiceBusModel> _newProductPublisher;
 
 		public MarketService(ILogger<MarketService> logger,
 			IGrpcServiceProxy<IUserTokenAccountService> userTokenAccountService,
 			IGrpcServiceProxy<IMarketProductService> marketProductService,
 			IServiceBusPublisher<ClearEducationProgressServiceBusModel> clearProgressPublisher,
 			IGrpcServiceProxy<IEducationRetryService> educationRetryService,
-			IServiceBusPublisher<NewMascotProductServiceBusModel> newMascotPublisher,
+			IServiceBusPublisher<MarketProductPurchasedServiceBusModel> newProductPublisher,
 			IServiceBusPublisher<ClearEducationUiProgressServiceBusModel> clearUiProgressPublisher,
 			IGrpcServiceProxy<IUserMascotRepositoryService> userMascotRepository)
 		{
@@ -50,7 +50,7 @@ namespace Service.Market.Services
 			_marketProductService = marketProductService;
 			_clearProgressPublisher = clearProgressPublisher;
 			_educationRetryService = educationRetryService;
-			_newMascotPublisher = newMascotPublisher;
+			_newProductPublisher = newProductPublisher;
 			_clearUiProgressPublisher = clearUiProgressPublisher;
 			_userMascotRepository = userMascotRepository;
 		}
@@ -185,10 +185,10 @@ namespace Service.Market.Services
 
 			if (ProductTypeGroup.MascotProductTypes.Contains(product))
 			{
-				_logger.LogInformation("Publish NewMascotProductServiceBusModel for user {user}, product: {product}", userId, product);
-
-				await _newMascotPublisher.PublishAsync(new NewMascotProductServiceBusModel {UserId = userId, Product = product});
 			}
+
+			_logger.LogInformation("Publish MarketProductPurchasedServiceBusModel for user {user}, product: {product}", userId, product);
+			await _newProductPublisher.PublishAsync(new MarketProductPurchasedServiceBusModel { UserId = userId, Product = product });
 
 			return BuyProductGrpcResponse.Ok;
 		}
